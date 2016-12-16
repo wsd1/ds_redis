@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="/bower_components/deepstream.io-client-js/dist/deepstream.js"></script>
+  </head>
+  <body>
+    <input type="textarea" />
+    <script type="text/javascript">
+
+var client = deepstream('192.168.1.5:6020').login()
+var record = client.record.getRecord('record/otu/info/255')
+var input = document.querySelector('input')
+
+/*
+input.onkeyup = (function() {
+  record.set('info', input.value)
+})
+*/
+
+record.subscribe(function(value) {
+  input.value = value.life
+})
+
+    </script>
+  </body>
+</html>
+
+

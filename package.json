@@ -1,0 +1,20 @@
+{
+  "name": "ds-redis",
+  "version": "0.0.1",
+  "description": "This is deepstream client for redis hub. Part of ucast project.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ucast",
+    "deepstream",
+    "redis",
+    "ot"
+  ],
+  "author": "yizuoshe@gmail.com",
+  "license": "ISC",
+  "dependencies": {
+    "deepstream.io-client-js": "^2.0.0"
+  }
+}
