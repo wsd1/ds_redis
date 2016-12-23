@@ -10,21 +10,16 @@
 var client = deepstream('192.168.1.4:6020').login()
 
 
-
-var record = client.record.getRecord("record/otu/info/255")
-var input = document.querySelector('input')
-
-/*
-input.onkeyup = (function() {
-  record.set('info', input.value)
+client.record.listen('record/otu/info/*', function(match, isSubscribed, response){
+  if (isSubscribed) {
+    console.log("Some one sub:" + match)
+    response.reject()
+  }
+  else {
+    console.log("No one sub:" + match)
+    client.record.getRecord(match).discard()
+  }
 })
-*/
-
-record.subscribe(function(value) {
-  input.value = value.life
-})
-
-
 
 
     </script>

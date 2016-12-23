@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Smart Home Portal Example</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+	<script type="text/javascript" src="https://rawgit.com/hoxton-one/deepstream.io-client-js/master/dist/deepstream.min.js"></script>
+
+	<style>
+		body {
+			background: #ccc;
+		}
+	/* SWITCH */
+		.cube-switch {
+			border-radius:10px;
+			border:1px solid rgba(0,0,0,0.4);
+			box-shadow: 0 0 8px rgba(0,0,0,0.6), inset 0 200px 50px rgba(255,255,255,0.1);
+			/* Prevents clics on the back */
+			cursor:default;    
+			display: inline-block;
+			height: 200px;
+			position: relative;
+			margin: 5% 0px 0px 10%;
+			overflow:hidden;
+			/* Prevents clics on the back */
+			pointer-events:none;
+			width: 200px;
+			white-space: nowrap;
+			background:#333;
+		}
+		/* The switch */
+		.cube-switch .switch, .cube-switch .screen {
+			border:1px solid rgba(0,0,0,0.6);
+			border-radius:0.7em;
+		   
+			display:block;
+			width: 120px;
+			height: 120px;
+			margin-left:-60px;
+			margin-top:-60px;
+			position:absolute;
+			top: 50%;
+			left: 50%;
+			width: 120px;	 
+			
+			transition: all 0.2s ease-out;
+		}
+		.cube-switch .switch {
+			background:#666;
+			box-shadow:
+			inset 0 0px 0 rgba(255,255,255,0.3), 
+			inset 0 0px 0 rgba(0,0,0,0.2), 
+			inset 0 60px 50px rgba(0,0,0,0.2), 
+			0 1px 0 rgba(255,255,255,0.2);
+			/* Allows click */
+			cursor:pointer;
+			pointer-events:auto;
+		}
+		.cube-switch .screen {
+			background:#969696;
+			box-shadow:
+			inset 0 1px 0 rgba(255,255,255,0.3),
+			inset 0 0px 0 rgba(0,0,0,0.2),
+			inset 0 100px 100px rgba(0,0,0,0.2),
+			0 1px 0 rgba(255,255,255,0.2);
+		}
+		/* SWITCH Active State */
+		.cube-switch.active .switch {
+			background:#333;
+			box-shadow:
+			inset 0 6px 0 rgba(255,255,255,0.1),
+			inset 0 7px 0 rgba(0,0,0,0.2),
+			inset 0 -50px 10px rgba(0,0,0,0.1),
+			0 1px 0 rgba(205,205,205,0.1);
+		}
+		.cube-switch.active:after,
+		.cube-switch.active:before {
+			background:#333; 
+			box-shadow:
+			0 1px 0 rgba(255,255,255,0.1),
+			inset 1px 2px 1px rgba(0,0,0,0.5),
+			inset 3px 6px 2px rgba(200,200,200,0.1),
+			inset -1px -2px 1px rgba(0,0,0,0.3);
+		}
+		.cube-switch.active .switch:after,
+		.cube-switch.active .switch:before {
+			background:#222;
+			border:none;
+			margin-top:0;
+			height:1px;
+		}
+		.cube-switch .switch-state {
+			display: block;
+			position: absolute;
+			left: 40%;
+			color: #FFF;
+			font-size: 1em;
+			text-align: center;
+		}
+		/* SWITCH On State */
+		.cube-switch .switch-state.on {
+			bottom: 15%;
+		}
+		/* SWITCH Off State */
+		.cube-switch .switch-state.off {
+			top: 15%;
+		}
+		.temperature-value {
+			top: 40px;
+			position: relative;
+			font-size: 25px;
+			text-align: center;
+			width: 100%;
+			display: block;
+		}
+		</style>
+</head>
+
+<body>
+
+	<div href="" class="led cube-switch">
+		<span class="switch">
+			<span class="switch-state off">Off</span>
+			<span class="switch-state on">On</span>
+		</span>
+	</div>
+
+	<div href="" class="temperature cube-switch">
+		<span class="screen">
+			<span class="temperature-value"></span>
+		</span>
+	</div>
+
+	<script type="text/javascript">
+		var loggedIn = false;
+		$('.cube-switch .switch').click(function() {
+			if ($('.cube-switch').hasClass('active')) {
+				$('.cube-switch').removeClass('active');
+			} else {
+				$('.cube-switch').addClass('active');
+			}
+			loggedIn && ds.event.emit( 'led-red', $('.cube-switch').hasClass('active') );
+		});
+		var ds = deepstream( '192.168.1.5:6020' ).login( {}, function() {
+			//Subscribe to temperature changes
+			ds.event.subscribe( 'event/otu/devlog/255', function( value ) {
+				 $('.temperature-value' ).html( value + ' &#8451;' );
+			} );
+			//Set current state once logged in
+			ds.event.emit( 'led-red', $('.cube-switch').hasClass('active') );
+			loggedIn = true;
+		} );
+	</script>
+</body>
+
+</html>
