@@ -10,6 +10,11 @@ const otu_redis_sub = redis.createClient()
 const otu_redis_pub = redis.createClient()
 
 
+
+const CONST_OTUSVR_CALL_REDIS_CHANNEL = "otusvr.call"
+const CONST_OTUSVR_ACK_REDIS_CHANNEL_PREFIX = "otusvr.ack"
+
+
 //订阅计数器
 const did_ref_cnt = [];
 
@@ -18,7 +23,7 @@ function did_subscribe(did)	//did 是 string
 	//取记录，新的就订阅，大于0就不动作，引用加一
 	let did_cnt = "number" == typeof(did_ref_cnt[did])? did_ref_cnt[did]:0;
 	if(0 == did_cnt)
-		otu_redis_sub.subscribe(util.format("otu.pub.%s", did));
+		otu_redis_sub.subscribe(util.format(CONST_OTUSVR_ACK_REDIS_CHANNEL_PREFIX + ".%s", did));
 
 	did_ref_cnt[did] = did_cnt+1;
 }
@@ -30,7 +35,7 @@ function did_unsubscribe(did) //did 是 string
 	did_cnt--;
 
 	if(did_cnt <= 0){
-		otu_redis_sub.unsubscribe(util.format("otu.pub.%s", did));
+		otu_redis_sub.unsubscribe(util.format(CONST_OTUSVR_ACK_REDIS_CHANNEL_PREFIX + ".%s", did));
 		delete did_ref_cnt[did];
 	}
 }
@@ -55,7 +60,7 @@ client.record.listen('record/otu/info/*', (match, isSubscribed, response) => {
 
 		    console.log("Redis fire:" + redis_chan);// + ": " + message);
 
-			// in form: otu.pub.255
+			// in form: CONST_OTUSVR_ACK_REDIS_CHANNEL_PREFIX+".255"
 			var redis_ar = redis_chan.split('.');
 			var redis_did = redis_ar[2];
 
@@ -82,14 +87,14 @@ client.record.listen('record/otu/info/*', (match, isSubscribed, response) => {
 		did_subscribe(ds_did);
 
 		//触发 otu 向频道发布
-		otu_redis_pub.publish("otu.sub", util.format('{"method":"ChanSub", "params":{"key":"info", "did":%s}}', ds_did) );
+		otu_redis_pub.publish(CONST_OTUSVR_CALL_REDIS_CHANNEL, util.format('{"method":"ChanSub", "params":{"key":"info", "did":%s}}', ds_did) );
 
 	} else {
 		console.log("No one sub:" + match) // 'settings/security'
 
 		//没人定阅
 		//trigger otu to stop publish
-		otu_redis_pub.publish("otu.sub", util.format('{"method":"ChanDiscard", "params":{"key":"info", "did":%s}}', ds_did));
+		otu_redis_pub.publish(CONST_OTUSVR_CALL_REDIS_CHANNEL, util.format('{"method":"ChanDiscard", "params":{"key":"info", "did":%s}}', ds_did));
 
 		did_unsubscribe(ds_did);
 
@@ -118,7 +123,7 @@ client.event.listen('event/otu/devlog/*', (eventName, isSubscribed, response) =>
 
 		    console.log("Redis fire:" + redis_chan);// + ": " + message);
 
-			// in form: otu.pub.255
+			// in form: CONST_OTUSVR_ACK_REDIS_CHANNEL_PREFIX+".255"
 			var redis_ar = redis_chan.split('.');
 			var redis_did = redis_ar[2];
 
@@ -141,7 +146,7 @@ client.event.listen('event/otu/devlog/*', (eventName, isSubscribed, response) =>
 		did_subscribe(ds_did);
 
 		//触发 otu 向频道发布
-		otu_redis_pub.publish("otu.sub", util.format('{"method":"ChanSub", "params":{"key":"devlog", "did":%s}}', ds_did) );
+		otu_redis_pub.publish(CONST_OTUSVR_CALL_REDIS_CHANNEL, util.format('{"method":"ChanSub", "params":{"key":"devlog", "did":%s}}', ds_did) );
 
 
 	} else {
@@ -149,7 +154,7 @@ client.event.listen('event/otu/devlog/*', (eventName, isSubscribed, response) =>
 
 		//没人定阅
 		//trigger otu to stop publish
-		otu_redis_pub.publish("otu.sub", util.format('{"method":"ChanDiscard", "params":{"key":"devlog", "did":%s}}', ds_did));
+		otu_redis_pub.publish(CONST_OTUSVR_CALL_REDIS_CHANNEL, util.format('{"method":"ChanDiscard", "params":{"key":"devlog", "did":%s}}', ds_did));
 
 		did_unsubscribe(ds_did);
 	}
@@ -161,7 +166,7 @@ client.event.listen('event/otu/devlog/*', (eventName, isSubscribed, response) =>
 // It will receive rpc in the form of: {did:xx, method:xxx, params:xxx, [id:xxx]}
 // 'id' is optional, if not exist or its value set to 0, it means this is just notify, peer is not required to reply. This is cheap lightweight and rapid.
 
-// It will issue call by publishing request to redis "otu.sub" channel. 
+// It will issue call by publishing request to redis CONST_OTUSVR_CALL_REDIS_CHANNEL channel. 
 // request in the form of: {"method":"DownCall", "params":{"method":"uCast.info","params":{},"id":1986, "did":255}}
 client.rpc.provide( 'rpc/otu/call', ( rpc, response ) => {
 
@@ -198,7 +203,7 @@ client.rpc.provide( 'rpc/otu/call', ( rpc, response ) => {
 
 	    console.log("Redis ack:" + redis_chan + ": " + message);
 
-		//channel in form of: otu.pub.255
+		//channel in form of: CONST_OTUSVR_ACK_REDIS_CHANNEL_PREFIX+".255"
 		var redis_ar = redis_chan.split('.');
 		var redis_did = redis_ar[2];
 
@@ -228,8 +233,8 @@ client.rpc.provide( 'rpc/otu/call', ( rpc, response ) => {
 
 
 //向otu订阅的频道发布
-	// publish to channel 'otu.sub': {"method":"DownCall", "params":{"method":"uCast.info","params":{},"id":1986, "did":255}}
-	otu_redis_pub.publish("otu.sub", call_str);
+	// publish to channel 'otusvr.call': {"method":"DownCall", "params":{"method":"uCast.info","params":{},"id":1986, "did":255}}
+	otu_redis_pub.publish(CONST_OTUSVR_CALL_REDIS_CHANNEL, call_str);
 	console.log("Issue down call:" + call_str)
 
 

@@ -7,20 +7,32 @@
     <input type="textarea" />
     <script type="text/javascript">
 
-var client = deepstream('192.168.1.4:6020').login()
+var client = deepstream('192.168.1.185:6020').login()
 
-
+var r_match = ""
 client.record.listen('record/otu/info/*', function(match, isSubscribed, response){
   if (isSubscribed) {
     console.log("Some one sub:" + match)
-    response.reject()
+    //response.reject()
+    response.accept()
+    r_match = match
+
   }
   else {
     console.log("No one sub:" + match)
+    //clearInterval(tmr);
+    r_match = ""
     client.record.getRecord(match).discard()
   }
 })
 
+var tmr = setInterval(function(){
+    if(r_match != ""){
+      var record_match = client.record.getRecord(r_match);
+      record_match.set({rand:Math.random()})
+      record_match.discard()
+    }
+  }, 60000)
 
     </script>
   </body>

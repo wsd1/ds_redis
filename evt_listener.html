@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="/bower_components/deepstream.io-client-js/dist/deepstream.js"></script>
+  </head>
+  <body>
+    <input type="textarea" />
+    <script type="text/javascript">
+
+var client = deepstream('192.168.1.185:6020').login()
+
+client.event.listen('event/otu/devlog/*', (eventName, isSubscribed, response) => {
+  console.log(eventName) // 'news/sports'
+  if (isSubscribed) {
+
+    if (1/* if you want to provide */) {
+      response.accept()
+      // start publishing data via `client.event.emit(eventName, /* data */)`
+    } else {
+      repsonse.reject() // let deepstream ask another provider
+    }
+  } else {
+    // stop publishing data
+  }
+})
+    </script>
+  </body>
+</html>
+
+

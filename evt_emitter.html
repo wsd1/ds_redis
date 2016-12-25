@@ -8,22 +8,21 @@
     <script type="text/javascript">
 
 var client = deepstream('192.168.1.185:6020').login()
-
-
-
-var record = client.record.getRecord("record/otu/info/255")
 var input = document.querySelector('input')
 
-/*
+
 input.onkeyup = (function() {
-  record.set('info', input.value)
-})
-*/
 
-record.subscribe(function(value) {
-  input.value = value.rand
-})
 
+  var rpc = {};
+  rpc.method = "uCast.info";
+  rpc.params = {};
+  rpc.id = 12345;
+  rpc.did = 255;
+
+  client.event.emit('event/otu/devlog/255', 'football is happening')
+
+})
 
 
 
